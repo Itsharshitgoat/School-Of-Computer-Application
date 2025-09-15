@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Project Form</title>
+  </head>
+  <body>
+    <center>
+      <form>
+        Project Name:
+        <input type="text" name="projectName" placeholder="Name" minlength="1" maxlength="12"><br><br>
+        Start:
+        <input type="date" name="startDate"><br><br>
+        End:
+        <input type="date" name="endDate"><br><br>
+        Priority:<br>
+        <input type="radio" name="priority" value="Low"> Low
+        <input type="radio" name="priority" value="Medium"> Medium
+        <input type="radio" name="priority" value="High"> High<br><br>
+        Description:<br>
+        <textarea name="description" rows="5" cols="40" placeholder="Enter project details..."></textarea><br><br>
+        <input type="submit" value="Submit">
+        <input type="reset" value="Reset">
+      </form>
+    </center>
+  </body>
+</html>
