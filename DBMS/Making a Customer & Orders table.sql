@@ -1,0 +1,13 @@
+CREATE TABLE CUSTOMER (
+    SID NUMBER PRIMARY KEY,
+    Last_Name VARCHAR2(50),
+    First_Name VARCHAR2(50)
+);
+
+CREATE TABLE ORDERS (
+    Order_ID NUMBER PRIMARY KEY,
+    Order_Date DATE,
+    Customer_SID NUMBER,
+    Amount NUMBER CHECK (Amount > 20000),
+    FOREIGN KEY (Customer_SID) REFERENCES CUSTOMER(SID)
+);
