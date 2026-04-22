@@ -1,0 +1,24 @@
+{
+  "name": "task-master",
+  "version": "1.0.0",
+  "description": "A task management app with a modern UI",
+  "main": "main.js",
+  "author": "Harshit",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.tomind.app",
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "dependencies": {
+    "electron-store": "^10.0.0"
+  },
+  "devDependencies": {
+    "electron": "^32.1.2",
+    "electron-builder": "^24.13.3"
+  }
+}

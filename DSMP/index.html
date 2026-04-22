@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Task Master</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }    body {
+      font-family: 'Inter', sans-serif;
+      background: transparent;
+      color: #e2e8f0;
+      height: 600px;
+      width: 600px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      border-radius: 16px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('Wallpaper.png') no-repeat center center fixed;
+      background-size: cover;
+      border-radius: 16px;
+      z-index: -1;
+    }
+
+    .container {
+      background: rgba(45, 55, 72, 0.5);
+      border: 1px solid rgba(45, 55, 72, 0.6);
+      border-radius: 12px;
+      padding: 16px;
+      flex-grow: 1;
+      overflow-y: auto;
+      height: 100%;
+      width: 100%;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-pill {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(45, 55, 72, 0.5);
+      border: 1px solid rgba(45, 55, 72, 0.6);
+      border-radius: 20px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+    }
+
+    .nav-pill h2 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .creator-button {
+      background: #5a67d8;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 16px;
+      border: none;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .creator-button:hover {
+      background: #4c51bf;
+    }
+
+    .close-button {
+      background: transparent;
+      border: none;
+      padding: 4px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+    }
+
+    .close-button:hover {
+      background: rgba(245, 101, 101, 0.3);
+    }
+
+    .close-button img {
+      width: 16px;
+      height: 16px;
+      filter: invert(90%);
+    }
+
+    .close-button span {
+      display: none;
+      font-size: 14px;
+      color: #e2e8f0;
+    }
+
+    .task-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .task-title-input {
+      width: 100%;
+    }
+
+    .task-options {
+      display: flex;
+      gap: 12px;
+    }
+
+    .task-options select,
+    .task-options input {
+      flex: 1;
+    }
+
+    input, select, textarea, button {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    input, select, textarea {
+      background: rgba(45, 55, 72, 0.5);
+      color: #e2e8f0;
+      border: 1px solid rgba(45, 55, 72, 0.6);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #5a67d8;
+    }
+
+    .task-due-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    .task-due-wrapper img {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+      filter: invert(90%);
+    }
+
+    #taskDue {
+      width: 100%;
+      border-radius: 20px;
+      padding: 8px 36px 8px 12px;
+      background: rgba(45, 55, 72, 0.5);
+      color: #e2e8f0;
+      border: 1px solid rgba(45, 55, 72, 0.6);
+      cursor: pointer;
+    }
+
+    #taskTitle {
+      width: 100%;
+    }
+
+    #taskTag {
+      width: 100%;
+    }
+
+    #taskDue {
+      width: 100%;
+      border-radius: 20px;
+      padding: 8px 12px;
+    }
+
+    #taskDesc {
+      width: 100%;
+      height: 118px;
+      resize: none;
+      border-radius: 8px;
+    }
+
+    .task-form button {
+      background: #5a67d8;
+      color: white;
+      cursor: pointer;
+      width: 100%;
+      padding: 10px;
+      border-radius: 20px;
+    }
+
+    .task-form button:hover {
+      background: #4c51bf;
+    }
+
+    .task-card {
+      background: rgba(45, 55, 72, 0.5);
+      border: 1px solid rgba(45, 55, 72, 0.6);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .task-card.completed {
+      opacity: 0.6;
+    }
+
+    .task-content {
+      flex-grow: 1;
+      margin-right: 10px;
+    }
+
+    .task-title {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .task-details {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .task-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 500;
+      color: white;
+      margin-top: 4px;
+    }    .task-tag.life { background: #68d391; }
+    .task-tag.work { background: #f6ad55; }
+    .task-tag.urgent { background: #f56565; }
+
+    .task-actions input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      margin-right: 6px;
+      accent-color: #68d391;
+    }
+
+    .task-actions button {
+      background: transparent;
+      color: #e2e8f0;
+      font-size: 14px;
+      padding: 4px;
+      margin-left: 4px;
+    }
+
+    .task-actions button:hover {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .search-filter {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .search-filter input {
+      flex-grow: 1;
+    }    .stats {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(45, 55, 72, 0.6);
+      text-align: center;
+    }
+
+    .stats-header {
+      background: rgba(45, 55, 72, 0.5);
+      border: 1px solid rgba(45, 55, 72, 0.6);
+      border-radius: 20px;
+      padding: 16px 28px;
+      margin-bottom: 28px;
+      display: inline-block;
+      min-width: 280px;
+    }
+
+    .stats h3 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      background: linear-gradient(45deg, #5a67d8, #4c51bf);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: #5a67d8;
+      letter-spacing: 0.5px;
+    }
+
+    .stats p {
+      font-size: 17px;
+      color: #e2e8f0;
+      font-weight: 500;
+      line-height: 1.4;
+    }    .stats canvas {
+      width: 100% !important;
+      max-width: 600px !important;
+      height: 280px !important;
+      margin: 32px auto 16px;
+      display: block;
+      padding: 24px;
+      background: rgba(45, 55, 72, 0.5);
+      border: 1px solid rgba(45, 55, 72, 0.6);
+      border-radius: 16px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1),
+                  0 0 20px rgba(90, 103, 216, 0.15),
+                  inset 0 0 20px rgba(90, 103, 216, 0.05);
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav-pill">
+      <h2>Task Master</h2>
+      <div class="nav-right">
+        <button class="creator-button" id="creatorButton">Creator</button>
+        <button class="close-button" id="closeButton">
+          <img src="x.png" alt="Close">
+          <span>✕</span>
+        </button>
+      </div>
+    </div>
+    <div class="task-form">
+      <div class="task-title-input">
+        <input type="text" id="taskTitle" placeholder="What do you want to do?" required>
+      </div>
+      <div class="task-options">        
+        <select id="taskTag">
+          <option value="">No Tag</option>
+          <option value="life">Life</option>
+          <option value="work">Work</option>
+          <option value="urgent">Urgent</option>
+        </select>
+        <div class="task-due-wrapper">
+          <input type="datetime-local" id="taskDue">
+          <img src="calendar.png" alt="Calendar">
+        </div>
+      </div>
+      <textarea id="taskDesc" placeholder="Description (optional)"></textarea>
+      <button id="addTaskButton">Add Task</button>
+    </div>
+
+    <div class="search-filter">
+      <input type="text" id="search" placeholder="Search tasks">      
+      <select id="filter">
+        <option value="all">All</option>
+        <option value="completed">Completed</option>
+        <option value="today">Today</option>
+        <option value="life">Life</option>
+        <option value="work">Work</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
+
+    <div id="taskList"></div>    
+    <div class="stats">
+      <div class="stats-header">
+        <h3>Weekly Progress</h3>
+        <p id="statsText"></p>
+      </div>
+      <canvas id="statsChart" width="200" height="200"></canvas>
+    </div>
+  </div>
+
+  <script>
+    let tasks = [];
+    let chartInstance = null;
+    let editTaskId = null;
+    let store;
+    try {
+      const Store = window.electronAPI.require('electron-store');
+      store = new Store();
+      tasks = store.get('tasks') || [];
+      console.log('Storage initialized, tasks loaded:', tasks.length);
+    } catch (error) {
+      console.warn('electron-store failed, using localStorage:', error);
+      tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, setting up event listeners');
+
+      const closeButton = document.getElementById('closeButton');
+      const creatorButton = document.getElementById('creatorButton');
+      const addTaskButton = document.getElementById('addTaskButton');
+      const filterSelect = document.getElementById('filter');
+      const searchInput = document.getElementById('search');
+
+      if (closeButton) {
+        closeButton.addEventListener('click', () => {
+          console.log('Close button clicked');
+          try {
+            window.electronAPI.ipcRenderer.send('close-app');
+          } catch (error) {
+            console.error('Error sending close-app IPC:', error);
+            alert('Failed to hide app.');
+          }
+        });
+      } else {
+        console.error('Close button not found');
+      }      if (creatorButton) {
+        creatorButton.addEventListener('click', () => {
+          console.log('Creator button clicked, opening website');
+          try {
+            if (window.electronAPI) {
+              window.electronAPI.shell.openExternal('https://itsharshitgoat.github.io/Website/');
+            } else {
+              window.open('https://itsharshitgoat.github.io/Website/', '_blank');
+            }
+          } catch (error) {
+            console.error('Error opening website:', error);
+            window.location.href = 'https://itsharshitgoat.github.io/Website/';
+          }
+        });
+      } else {
+        console.error('Creator button not found');
+      }
+
+      if (addTaskButton) {
+        addTaskButton.addEventListener('click', addTask);
+      } else {
+        console.error('Add Task button not found');
+      }
+
+      if (filterSelect) {
+        filterSelect.addEventListener('change', filterTasks);
+      } else {
+        console.error('Filter select not found');
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener('input', debounce(filterTasks, 300));
+      } else {
+        console.error('Search input not found');
+      }
+      try {
+        tasks.forEach(task => appendTask(task));
+        updateStats();
+      } catch (error) {
+        console.error('Error initializing tasks:', error);
+      }
+    });
+
+    function addTask() {
+      console.log('Add Task button clicked');
+      const title = document.getElementById('taskTitle')?.value.trim();
+      const desc = document.getElementById('taskDesc')?.value.trim();
+      const due = document.getElementById('taskDue')?.value;
+      const tag = document.getElementById('taskTag')?.value;
+
+      if (!title) {
+        console.error('Task title is empty');
+        alert('Please enter a task title.');
+        return;
+      }
+
+      if (editTaskId !== null) {
+        const idx = tasks.findIndex(t => t.id === editTaskId);
+        if (idx !== -1) {
+          tasks[idx] = {
+            ...tasks[idx],
+            title,
+            desc,
+            due,
+            tag
+          };
+          try {
+            if (store) {
+              store.set('tasks', tasks);
+            } else {
+              localStorage.setItem('tasks', JSON.stringify(tasks));
+            }
+            updateTaskElement(tasks[idx]);
+            updateStats();
+          } catch (error) {
+            console.error('Error updating task:', error);
+            alert('Failed to update task.');
+          }
+        }
+        editTaskId = null;
+        document.getElementById('addTaskButton').textContent = 'Add Task';
+      } else {
+        const task = {
+          id: Date.now(),
+          title,
+          desc,
+          due,
+          tag,
+          completed: false,
+          created: new Date().toISOString()
+        };
+        tasks.push(task);
+        try {
+          if (store) {
+            store.set('tasks', tasks);
+          } else {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+          }
+          console.log('Task saved:', task);
+        } catch (error) {
+          console.error('Error saving task:', error);
+          alert('Failed to save task.');
+        }
+        appendTask(task);
+        updateStats();
+        try {
+          new Audio('https://freesound.org/data/previews/456/456905_5121236-lq.mp3').play();
+        } catch (error) {
+          console.error('Error playing sound:', error);
+        }
+      }
+
+      document.getElementById('taskTitle').value = '';
+      document.getElementById('taskDesc').value = '';
+      document.getElementById('taskDue').value = '';
+      document.getElementById('taskTag').value = '';
+    }
+
+    function appendTask(task) {
+      const taskList = document.getElementById('taskList');
+      if (!taskList) {
+        console.error('Task list element not found');
+        return;
+      }
+      const taskEl = createTaskElement(task);
+      taskList.prepend(taskEl);
+      console.log('Task appended:', task);
+    }
+
+    function updateTaskElement(task) {
+      const taskEl = document.getElementById(`task-${task.id}`);
+      if (taskEl) {
+        taskEl.outerHTML = createTaskElement(task).outerHTML;
+      }
+    }
+
+    function createTaskElement(task) {
+      const taskEl = document.createElement('div');
+      taskEl.id = `task-${task.id}`;
+      taskEl.className = `task-card ${task.completed ? 'completed' : ''}`;
+      taskEl.innerHTML = `
+        <div class="task-content">
+          <div class="task-title">${task.title}</div>
+          <div class="task-details">
+            ${task.desc ? task.desc + '<br>' : ''} 
+            ${task.due ? `Due: ${new Date(task.due).toLocaleString()}` : ''}
+            ${task.tag ? `<span class="task-tag ${task.tag}">${task.tag}</span>` : ''}
+          </div>
+        </div>
+        <div class="task-actions">          <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
+          <button onclick="editTask(${task.id})"><img src="Pencil.png" alt="Edit" style="width: 16px; height: 16px;"></button>
+          <button onclick="deleteTask(${task.id})"><img src="bin.png" alt="Delete" style="width: 16px; height: 16px;"></button>
+        </div>
+      `;
+      return taskEl;
+    }
+
+    function toggleTask(id) {
+      console.log('Toggling task:', id);
+      tasks = tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task);
+      try {
+        if (store) {
+          store.set('tasks', tasks);
+        } else {
+          localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+        updateTaskElement(tasks.find(t => t.id === id));
+        updateStats();
+      } catch (error) {
+        console.error('Error updating task:', error);
+      }
+    }
+
+    function deleteTask(id) {
+      console.log('Deleting task:', id);
+      if (confirm('Delete this task?')) {
+        tasks = tasks.filter(task => task.id !== id);
+        try {
+          if (store) {
+            store.set('tasks', tasks);
+          } else {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+          }
+          const taskEl = document.getElementById(`task-${id}`);
+          if (taskEl) taskEl.remove();
+          updateStats();
+        } catch (error) {
+          console.error('Error deleting task:', error);
+        }
+      }
+    }
+
+    function editTask(id) {
+      console.log('Editing task:', id);
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        document.getElementById('taskTitle').value = task.title;
+        document.getElementById('taskDesc').value = task.desc;
+        document.getElementById('taskDue').value = task.due ? new Date(task.due).toISOString().slice(0, 16) : '';
+        document.getElementById('taskTag').value = task.tag;
+        editTaskId = id;
+        document.getElementById('addTaskButton').textContent = 'Update Task';
+      }
+    }
+
+    function filterTasks() {
+      console.log('Filtering tasks');
+      const search = document.getElementById('search')?.value.toLowerCase();
+      const filter = document.getElementById('filter')?.value;
+      let filteredTasks = tasks;
+
+      if (search) {
+        filteredTasks = filteredTasks.filter(t => 
+          t.title.toLowerCase().includes(search) || (t.desc && t.desc.toLowerCase().includes(search))
+        );
+      }
+
+      if (filter !== 'all') {
+        if (filter === 'completed') filteredTasks = filteredTasks.filter(t => t.completed);
+        else if (filter === 'today') filteredTasks = filteredTasks.filter(t => 
+          t.due && new Date(t.due).toDateString() === new Date().toDateString()
+        );
+        else filteredTasks = filteredTasks.filter(t => t.tag === filter);
+      }
+
+      const taskList = document.getElementById('taskList');
+      if (taskList) {
+        taskList.innerHTML = '';
+        filteredTasks.forEach(task => taskList.appendChild(createTaskElement(task)));
+      }
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    function updateStats() {
+      console.log('Updating stats');
+      const statsText = document.getElementById('statsText');
+      const statsChart = document.getElementById('statsChart');
+      if (!statsText || !statsChart) {
+        console.error('Stats elements not found');
+        return;
+      }
+
+      const completedThisWeek = tasks.filter(t => 
+        t.completed && new Date(t.created) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      ).length;
+      statsText.textContent = `Great work! You finished ${completedThisWeek} tasks this week!`;
+
+      const dailyCounts = Array(7).fill(0);
+      tasks.forEach(t => {
+        if (t.completed) {
+          const dayDiff = Math.floor((Date.now() - new Date(t.created)) / (24 * 60 * 60 * 1000));
+          if (dayDiff < 7) dailyCounts[6 - dayDiff]++;
+        }
+      });
+
+      try {
+        if (chartInstance) {
+          chartInstance.data.datasets[0].data = dailyCounts;
+          chartInstance.update();
+        } else if (typeof Chart !== 'undefined') {
+          chartInstance = new Chart(statsChart, {            type: 'line',
+            data: {
+              labels: ['6d ago', '5d ago', '4d ago', '3d ago', '2d ago', 'Yesterday', 'Today'],              datasets: [{
+                label: '',
+                data: dailyCounts,
+                borderColor: '#5a67d8',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.4,
+                backgroundColor: (context) => {
+                  const chart = context.chart;
+                  const {ctx, chartArea} = chart;
+                  if (!chartArea) return null;
+                  const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                  gradient.addColorStop(0, 'rgba(90, 103, 216, 0.0)');
+                  gradient.addColorStop(0.5, 'rgba(90, 103, 216, 0.2)');
+                  gradient.addColorStop(1, 'rgba(90, 103, 216, 0.3)');
+                  return gradient;
+                },
+                borderColor: (context) => {
+                  const chart = context.chart;
+                  const {ctx, chartArea} = chart;
+                  if (!chartArea) return null;
+                  const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                  gradient.addColorStop(0, '#4c51bf');
+                  gradient.addColorStop(1, '#7c84f0');
+                  return gradient;
+                },
+                pointBackgroundColor: '#7c84f0',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointHoverBorderWidth: 3,
+                pointHoverBackgroundColor: '#ffffff',
+                pointHoverBorderColor: '#5a67d8'
+              }]
+            },            options: {
+              maintainAspectRatio: false,
+              responsive: true,
+              animation: {
+                duration: 1500,
+                easing: 'easeOutQuart'
+              },              plugins: {
+                legend: {
+                  display: false
+                }
+              },
+              interaction: {
+                intersect: false,
+                mode: 'index'
+              },
+              scales: {
+                x: {
+                  ticks: { 
+                    color: '#e2e8f0',
+                    font: {
+                      size: 16,
+                      weight: '500'
+                    },
+                    padding: 8
+                  },
+                  grid: {
+                    color: 'rgba(255, 255, 255, 0.1)',
+                    drawBorder: false
+                  }
+                },
+                y: {
+                  ticks: { 
+                    color: '#e2e8f0',
+                    font: {
+                      size: 16,
+                      weight: '500'
+                    },
+                    stepSize: 1
+                  },
+                  grid: { 
+                    drawBorder: false
+                  },
+                  beginAtZero: true
+                }
+              },
+              layout: {
+                padding: {
+                  top: 16,
+                  right: 16,
+                  bottom: 16,
+                  left: 8
+                }
+              },
+              elements: {
+                line: {
+                  tension: 0.4
+                },
+                point: {
+                  radius: 4,
+                  hoverRadius: 6,
+                  backgroundColor: '#5a67d8'
+                }
+              },
+              animation: {
+                duration: 300
+              }
+            }
+          });
+          console.log('Line graph initialized');
+        } else {
+          console.error('Chart.js not loaded');
+          alert('Line graph failed to load.');
+        }
+      } catch (error) {
+        console.error('Error initializing line graph:', error);
+        alert('Failed to load line graph.');
+      }
+    }
+    try {
+      window.electronAPI.ipcRenderer.on('refresh-tasks', () => {
+        console.log('Received refresh-tasks IPC');
+        try {
+          if (store) {
+            tasks = store.get('tasks') || [];
+          } else {
+            tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+          }
+          filterTasks();
+          updateStats();
+        } catch (error) {
+          console.error('Error refreshing tasks:', error);
+        }
+      });
+    } catch (error) {
+      console.error('Error setting up IPC listener:', error);
+    }
+  </script>
+</body>
+</html>
