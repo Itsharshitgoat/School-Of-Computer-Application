@@ -1,0 +1,287 @@
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.DecimalFormat;
+import java.sql.SQLException;
+
+public class UIFrame extends JFrame {
+    private static final Color BG_MAIN = new Color(252, 249, 244);
+    private static final Color BG_CARD = new Color(246, 243, 238);
+    private static final Color TEXT_DARK = new Color(50, 50, 50);
+    private static final Color BTN_PRIMARY = new Color(244, 162, 97);
+    private static final Color BTN_ECO = new Color(120, 180, 120);
+    private static final Color BTN_NEUTRAL = new Color(200, 200, 200);
+    private static final Color BG_GREEN = new Color(230, 245, 230);
+    private static final Color BG_AMBER = new Color(255, 245, 230);
+    private static final Color TEXT_GREEN = new Color(40, 120, 40);
+    private static final Color TEXT_AMBER = new Color(200, 120, 40);
+
+    private JTextField distanceField;
+    private JComboBox<String> transportCombo;
+
+    private JPanel resultPanel;
+    private JLabel carbonLabel;
+    private JLabel suggestionLabel;
+
+    private JLabel ecoSavingsLabel;
+    private JLabel missedPotentialLabel;
+
+    private JButton saveEcoBtn;
+    private JButton saveNormalBtn;
+
+    private double currentDistance = 0;
+    private String currentTransport = "";
+    private double currentCarbon = 0;
+    private String currentSuggestedTransport = "";
+    private double currentSavings = 0;
+
+    private static final DecimalFormat df = new DecimalFormat("0.00");
+    private JPanel mainContainer;
+
+    public UIFrame() {
+        setTitle("Carbon Path");
+        setSize(420, 700);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+        getContentPane().setBackground(BG_MAIN);
+
+        setupNavBar();
+
+        mainContainer = new JPanel();
+        mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
+        mainContainer.setBackground(BG_MAIN);
+        mainContainer.setBorder(new EmptyBorder(24, 24, 24, 24));
+
+        setupInputSection();
+        setupResultSection();
+
+        add(mainContainer, BorderLayout.CENTER);
+    }
+
+    private void setupNavBar() {
+        JPanel navPanel = new JPanel(new BorderLayout());
+        navPanel.setBackground(BG_MAIN);
+        navPanel.setBorder(new EmptyBorder(16, 24, 16, 24));
+
+        JLabel titleLabel = new JLabel("Carbon Path");
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+        titleLabel.setForeground(TEXT_DARK);
+
+        JButton historyBtn = new JButton("History");
+        historyBtn.setBackground(BTN_NEUTRAL);
+        historyBtn.setForeground(TEXT_DARK);
+        historyBtn.setFocusPainted(false);
+        historyBtn.setBorderPainted(false);
+        historyBtn.setFont(new Font("SansSerif", Font.BOLD, 14));
+        historyBtn.addActionListener(e -> {
+            new HistoryViewer().setVisible(true);
+            this.dispose();
+        });
+
+        navPanel.add(titleLabel, BorderLayout.WEST);
+        navPanel.add(historyBtn, BorderLayout.EAST);
+        add(navPanel, BorderLayout.NORTH);
+    }
+
+    private void setupInputSection() {
+        JPanel inputCard = new JPanel();
+        inputCard.setLayout(new BoxLayout(inputCard, BoxLayout.Y_AXIS));
+        inputCard.setBackground(BG_CARD);
+        inputCard.setBorder(new EmptyBorder(24, 24, 24, 24));
+        inputCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+ 
+        JLabel distanceLbl = new JLabel("How much is the distance ( tell in km )");
+        distanceLbl.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        distanceLbl.setForeground(TEXT_DARK);
+        distanceLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        distanceField = new JTextField(10);
+        distanceField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        distanceField.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel transportLbl = new JLabel("How will you do there...?");
+        transportLbl.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        transportLbl.setForeground(TEXT_DARK);
+        transportLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        String[] transports = {"Walking", "Bicycle", "Bike", "Car", "Bus"};
+        transportCombo = new JComboBox<>(transports);
+        transportCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        transportCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JButton calcBtn = new JButton("Do the Math's for me");
+        calcBtn.setBackground(BTN_PRIMARY);
+        calcBtn.setForeground(TEXT_DARK);
+        calcBtn.setFocusPainted(false);
+        calcBtn.setBorderPainted(false);
+        calcBtn.setFont(new Font("SansSerif", Font.BOLD, 14));
+        calcBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        calcBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        calcBtn.addActionListener(e -> calculateCarbon());
+
+        inputCard.add(distanceLbl);
+        inputCard.add(Box.createRigidArea(new Dimension(0, 8)));
+        inputCard.add(distanceField);
+        inputCard.add(Box.createRigidArea(new Dimension(0, 16)));
+        inputCard.add(transportLbl);
+        inputCard.add(Box.createRigidArea(new Dimension(0, 8)));
+        inputCard.add(transportCombo);
+        inputCard.add(Box.createRigidArea(new Dimension(0, 24)));
+        inputCard.add(calcBtn);
+
+        mainContainer.add(inputCard);
+        mainContainer.add(Box.createRigidArea(new Dimension(0, 24)));
+    }
+
+    private void setupResultSection() {
+        resultPanel = new JPanel();
+        resultPanel.setLayout(new BoxLayout(resultPanel, BoxLayout.Y_AXIS));
+        resultPanel.setBackground(BG_CARD);
+        resultPanel.setBorder(new EmptyBorder(24, 24, 24, 24));
+        resultPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        resultPanel.setVisible(false);
+
+        carbonLabel = new JLabel("Carbon footprint: --");
+        carbonLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+        carbonLabel.setForeground(TEXT_DARK);
+        carbonLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        suggestionLabel = new JLabel("Suggestion Try: --");
+        suggestionLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        suggestionLabel.setForeground(TEXT_DARK);
+        suggestionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel savingsCardPanel = new JPanel();
+        savingsCardPanel.setLayout(new GridLayout(1, 2, 10, 0));
+        savingsCardPanel.setBackground(BG_CARD);
+        savingsCardPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel leftCard = new JPanel();
+        leftCard.setLayout(new BoxLayout(leftCard, BoxLayout.Y_AXIS));
+        leftCard.setBackground(BG_GREEN);
+        leftCard.setBorder(new EmptyBorder(12, 12, 12, 12));
+        JLabel ecoTitle = new JLabel("Eco Savings Achieved");
+        ecoTitle.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        ecoTitle.setForeground(TEXT_GREEN);
+        ecoSavingsLabel = new JLabel("0.00 kg");
+        ecoSavingsLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        ecoSavingsLabel.setForeground(TEXT_GREEN);
+        leftCard.add(ecoTitle);
+        leftCard.add(Box.createRigidArea(new Dimension(0, 4)));
+        leftCard.add(ecoSavingsLabel);
+
+        JPanel rightCard = new JPanel();
+        rightCard.setLayout(new BoxLayout(rightCard, BoxLayout.Y_AXIS));
+        rightCard.setBackground(BG_AMBER);
+        rightCard.setBorder(new EmptyBorder(12, 12, 12, 12));
+        JLabel missedTitle = new JLabel("Missed Potential");
+        missedTitle.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        missedTitle.setForeground(TEXT_AMBER);
+        missedPotentialLabel = new JLabel("0.00 kg");
+        missedPotentialLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        missedPotentialLabel.setForeground(TEXT_AMBER);
+        rightCard.add(missedTitle);
+        rightCard.add(Box.createRigidArea(new Dimension(0, 4)));
+        rightCard.add(missedPotentialLabel);
+
+        savingsCardPanel.add(leftCard);
+        savingsCardPanel.add(rightCard);
+
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
+        buttonsPanel.setBackground(BG_CARD);
+        buttonsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        saveEcoBtn = new JButton("Save Carbon Path Choice");
+        saveEcoBtn.setBackground(BTN_ECO);
+        saveEcoBtn.setForeground(TEXT_DARK);
+        saveEcoBtn.setFocusPainted(false);
+        saveEcoBtn.setBorderPainted(false);
+        saveEcoBtn.setFont(new Font("SansSerif", Font.BOLD, 14));
+        saveEcoBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        saveEcoBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        saveEcoBtn.addActionListener(e -> saveTrip(true));
+
+        saveNormalBtn = new JButton("Save My Choice");
+        saveNormalBtn.setBackground(BTN_NEUTRAL);
+        saveNormalBtn.setForeground(TEXT_DARK);
+        saveNormalBtn.setFocusPainted(false);
+        saveNormalBtn.setBorderPainted(false);
+        saveNormalBtn.setFont(new Font("SansSerif", Font.BOLD, 14));
+        saveNormalBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        saveNormalBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        saveNormalBtn.addActionListener(e -> saveTrip(false));
+
+        buttonsPanel.add(saveEcoBtn);
+        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        buttonsPanel.add(saveNormalBtn);
+
+        resultPanel.add(carbonLabel);
+        resultPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        resultPanel.add(suggestionLabel);
+        resultPanel.add(Box.createRigidArea(new Dimension(0, 16)));
+        resultPanel.add(savingsCardPanel);
+        resultPanel.add(Box.createRigidArea(new Dimension(0, 24)));
+        resultPanel.add(buttonsPanel);
+
+        mainContainer.add(resultPanel);
+    }
+
+    private void calculateCarbon() {
+        try {
+            currentDistance = Double.parseDouble(distanceField.getText());
+            currentTransport = (String) transportCombo.getSelectedItem();
+
+            currentCarbon = CarbonCalculator.calculateEmission(currentDistance, currentTransport);
+            currentSuggestedTransport = SuggestionEngine.getSuggestedTransport(currentDistance);
+            double optimalEmission = SuggestionEngine.calculateOptimalEmission(currentDistance);
+
+            currentSavings = currentCarbon - optimalEmission;
+            if (currentSavings < 0) currentSavings = 0;
+
+            carbonLabel.setText("Carbon footprint: " + df.format(currentCarbon) + " kg CO₂");
+            suggestionLabel.setText("Suggestion Try : " + currentSuggestedTransport);
+
+            ecoSavingsLabel.setText("0.00 kg");
+            missedPotentialLabel.setText(df.format(currentSavings) + " kg");
+
+            if (currentSavings > 0) {
+                saveEcoBtn.setVisible(true);
+            } else {
+                saveEcoBtn.setVisible(false);
+                missedPotentialLabel.setText("0.00 kg");
+            }
+
+            resultPanel.setVisible(true);
+            revalidate();
+            repaint();
+
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid numeric distance.", "Input Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void saveTrip(boolean isEcoChoice) {
+        Trip trip;
+        if (isEcoChoice && currentSavings > 0) {
+            double ecoCarbon = CarbonCalculator.calculateEmission(currentDistance, currentSuggestedTransport);
+            trip = new Trip(currentDistance, currentSuggestedTransport, ecoCarbon, currentSuggestedTransport, currentSavings);
+        } else {
+            trip = new Trip(currentDistance, currentTransport, currentCarbon, currentSuggestedTransport, currentSavings);
+        }
+
+        try {
+            DatabaseManager.saveTrip(trip);
+            JOptionPane.showMessageDialog(this, "Trip saved successfully!", "Saved", JOptionPane.INFORMATION_MESSAGE);
+            resultPanel.setVisible(false);
+            distanceField.setText("");
+            revalidate();
+            repaint();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this,
+                "Failed to save to database!\n\nReason: " + e.getMessage() + "\n\nDid you enter your MySQL password in DatabaseManager.java?",
+                "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+}
